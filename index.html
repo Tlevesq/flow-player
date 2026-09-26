@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex">
+<title>Flow Pole &amp; Yoga : lecteur vidéo</title>
+<!--
+  Page relais du lecteur YouTube pour l'app iPhone.
+  Depuis capacitor://localhost, WebKit n'envoie aucun Referer et YouTube refuse
+  la lecture (erreur 153). Cette page, hébergée en https (GitHub Pages),
+  embarque le lecteur avec un Referer valide et relaie les messages postMessage
+  entre l'app et YouTube (détection de fin de vidéo pour enchaîner la playlist).
+  Usage : index.html?v=<id YouTube>&api=1|0&start=<secondes>
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  p { color: #ccc; font: 16px system-ui, sans-serif; padding: 16px; }
+</style>
+</head>
+<body>
+<script>
+(function () {
+  var query = new URLSearchParams(location.search);
+  var id = query.get("v") || "";
+  if (!/^[A-Za-z0-9_-]{11}$/.test(id)) {
+    document.body.innerHTML = "<p>Vidéo introuvable.</p>";
+    return;
+  }
+  var api = query.get("api") !== "0";
+  var params = api
+    ? "enablejsapi=1&autoplay=1&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1&fs=1&playsinline=1"
+    : "rel=0&playsinline=1";
+  var start = parseInt(query.get("start") || "", 10);
+  if (start > 0) params += "&start=" + start;
+
+  var yt = document.createElement("iframe");
+  yt.src = "https://www.youtube.com/embed/" + id + "?" + params;
+  yt.title = "Vidéo";
+  yt.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
+  yt.allowFullscreen = true;
+  document.body.appendChild(yt);
+
+  window.addEventListener("message", function (e) {
+    if (!yt.contentWindow) return;
+    if (e.source === window.parent) {
+      yt.contentWindow.postMessage(e.data, "https://www.youtube.com");
+    } else if (e.source === yt.contentWindow) {
+      window.parent.postMessage(e.data, "*");
+    }
+  });
+})();
+</script>
+</body>
+</html>
