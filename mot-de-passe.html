@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Nouveau mot de passe · Flow Pole &amp; Yoga</title>
+<!--
+  Page de choix d'un nouveau mot de passe (mot de passe oublié, invitation).
+  Ouverte depuis le lien reçu par e-mail :
+    mot-de-passe.html?token_hash=…&type=recovery   (mot de passe oublié)
+    mot-de-passe.html?token_hash=…&type=invite     (invitation par Mélanie)
+  Le lien est vérifié auprès de Supabase, puis le nouveau mot de passe est
+  enregistré. Accepte aussi l'ancien format de lien (#access_token=…).
+-->
+<style>
+  :root { --fond: #fff4e8; --encre: #1c1c2e; --sourd: #6b6478; --cuivre: #b8743b; --carte: #fffaf4; --ligne: #e9d9c8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fond); color: var(--encre); font: 17px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 480px; margin: 0 auto; padding: 40px 20px 60px; }
+  h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; font-size: 30px; margin: 0 0 6px; }
+  .marque { color: var(--cuivre); font-size: 14px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 26px; }
+  .carte { background: var(--carte); border: 1px solid var(--ligne); border-radius: 18px; padding: 24px; }
+  label { display: block; font-size: 14px; color: var(--sourd); margin: 14px 0 6px; }
+  input { width: 100%; font: inherit; padding: 12px 14px; border: 1px solid var(--ligne); border-radius: 12px; background: #fff; }
+  button { width: 100%; margin-top: 20px; font: inherit; font-weight: 600; padding: 13px; border: 0; border-radius: 999px; background: var(--encre); color: #fff; cursor: pointer; }
+  button[disabled] { opacity: .5; cursor: default; }
+  .info { color: var(--sourd); font-size: 15px; }
+  .erreur { color: #b3261e; font-size: 15px; margin-top: 12px; }
+  .succes { text-align: center; }
+  .succes .coche { font-size: 48px; color: var(--cuivre); }
+  .cache { display: none; }
+  footer { margin-top: 28px; font-size: 13px; color: var(--sourd); text-align: center; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <div class="marque">Flow Pole &amp; Yoga</div>
+  <h1>Nouveau mot de passe</h1>
+
+  <div class="carte">
+    <p id="etat" class="info">Vérification du lien…</p>
+
+    <form id="formulaire" class="cache">
+      <p class="info">Choisis ton nouveau mot de passe (6 caractères minimum).</p>
+      <label for="mdp">Nouveau mot de passe</label>
+      <input id="mdp" type="password" autocomplete="new-password" minlength="6" required>
+      <label for="mdp2">Confirme-le</label>
+      <input id="mdp2" type="password" autocomplete="new-password" minlength="6" required>
+      <button id="valider" type="submit">Enregistrer</button>
+      <p id="erreur" class="erreur cache"></p>
+    </form>
+
+    <div id="succes" class="succes cache">
+      <div class="coche">✓</div>
+      <p><strong>Mot de passe enregistré.</strong></p>
+      <p class="info">Tu peux fermer cette page, ouvrir l'app Flow Pole &amp; Yoga et te connecter avec ce nouveau mot de passe.</p>
+    </div>
+  </div>
+
+  <footer>Un souci ? <a href="support.html">Page d'aide</a> · <a href="mailto:flowpoleandyoga@gmail.com">flowpoleandyoga@gmail.com</a></footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  var URL_SUPABASE = "https://camneizjfaxohbogympv.supabase.co";
+  var CLE_PUBLIQUE = "sb_publishable_Ub7eOBqw6b9OM7EwLmyqoA_g8Ht4Y5S";
+  var client = supabase.createClient(URL_SUPABASE, CLE_PUBLIQUE, { auth: { detectSessionInUrl: true, flowType: "implicit" } });
+
+  var etat = document.getElementById("etat");
+  var formulaire = document.getElementById("formulaire");
+  var succes = document.getElementById("succes");
+  var erreur = document.getElementById("erreur");
+  var valider = document.getElementById("valider");
+
+  function montrerErreur(message) {
+    etat.textContent = message;
+    etat.className = "erreur";
+  }
+
+  function montrerFormulaire() {
+    etat.className = "cache";
+    formulaire.className = "";
+  }
+
+  async function initialiser() {
+    var hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+    if (hash.get("error")) {
+      montrerErreur("Ce lien n'est plus valable : il expire au bout d'une heure et ne sert qu'une fois. Refais une demande « Mot de passe oublié ? » depuis l'app.");
+      return;
+    }
+    var query = new URLSearchParams(location.search);
+    var tokenHash = query.get("token_hash");
+    var type = query.get("type") || "recovery";
+    if (tokenHash) {
+      var verif = await client.auth.verifyOtp({ token_hash: tokenHash, type: type });
+      if (verif.error) {
+        montrerErreur("Ce lien n'est plus valable : il expire au bout d'une heure et ne sert qu'une fois. Refais une demande « Mot de passe oublié ? » depuis l'app.");
+        return;
+      }
+      montrerFormulaire();
+      return;
+    }
+    var session = await client.auth.getSession();
+    if (session.data && session.data.session) {
+      montrerFormulaire();
+    } else {
+      montrerErreur("Lien incomplet. Ouvre cette page depuis le lien reçu par e-mail, ou refais une demande « Mot de passe oublié ? » depuis l'app.");
+    }
+  }
+
+  formulaire.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    erreur.className = "erreur cache";
+    var mdp = document.getElementById("mdp").value;
+    var mdp2 = document.getElementById("mdp2").value;
+    if (mdp.length < 6) { erreur.textContent = "6 caractères minimum."; erreur.className = "erreur"; return; }
+    if (mdp !== mdp2) { erreur.textContent = "Les deux mots de passe ne sont pas identiques."; erreur.className = "erreur"; return; }
+    valider.disabled = true;
+    var res = await client.auth.updateUser({ password: mdp });
+    valider.disabled = false;
+    if (res.error) {
+      erreur.textContent = "Impossible d'enregistrer : " + res.error.message;
+      erreur.className = "erreur";
+      return;
+    }
+    await client.auth.signOut({ scope: "local" });
+    formulaire.className = "cache";
+    succes.className = "succes";
+  });
+
+  initialiser();
+})();
+</script>
+</body>
+</html>
