@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supprimer mon compte · Flow Pole &amp; Yoga</title>
+<meta name="description" content="Comment supprimer votre compte Flow Pole & Yoga et vos données, depuis l'application ou directement depuis cette page.">
+<!--
+  Page de suppression de compte exigée par Google Play et Apple : accessible
+  sans l'app. La suppression « depuis cette page » se connecte avec l'e-mail et
+  le mot de passe du compte puis appelle la même fonction serveur que l'app
+  (delete-account), qui refuse pour le compte administratrice.
+-->
+<style>
+  :root { --fond: #fff4e8; --encre: #1c1c2e; --sourd: #6b6478; --cuivre: #b8743b; --carte: #fffaf4; --ligne: #e9d9c8; --rouge: #b3261e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fond); color: var(--encre); font: 17px/1.6 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 40px 20px 60px; }
+  h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; font-size: 32px; margin: 0 0 6px; }
+  h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; font-size: 22px; margin: 32px 0 10px; }
+  .marque { color: var(--cuivre); font-size: 14px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 26px; }
+  .carte { background: var(--carte); border: 1px solid var(--ligne); border-radius: 18px; padding: 22px 24px; }
+  label { display: block; font-size: 14px; color: var(--sourd); margin: 14px 0 6px; }
+  input { width: 100%; font: inherit; padding: 12px 14px; border: 1px solid var(--ligne); border-radius: 12px; background: #fff; }
+  button { font: inherit; font-weight: 600; padding: 13px 20px; border: 0; border-radius: 999px; background: var(--encre); color: #fff; cursor: pointer; margin-top: 18px; width: 100%; }
+  button.danger { background: var(--rouge); }
+  button[disabled] { opacity: .5; cursor: default; }
+  .sourd { color: var(--sourd); font-size: 15px; }
+  .erreur { color: var(--rouge); font-size: 15px; margin-top: 12px; }
+  .cache { display: none; }
+  ol, ul { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--cuivre); }
+  .succes { text-align: center; }
+  .succes .coche { font-size: 48px; color: var(--cuivre); }
+  footer { margin-top: 36px; font-size: 13px; color: var(--sourd); }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <div class="marque">Flow Pole &amp; Yoga</div>
+  <h1>Supprimer mon compte</h1>
+  <p class="sourd">Vous pouvez supprimer votre compte Flow Pole &amp; Yoga et les données associées à tout moment, depuis l'application ou directement depuis cette page. La suppression est définitive.</p>
+
+  <h2>Avant de supprimer</h2>
+  <div class="carte">
+    <p><strong>Un abonnement en cours n'est pas résilié par la suppression du compte.</strong> Résiliez-le d'abord, sinon il continuerait d'être facturé par Apple ou Google :</p>
+    <ul>
+      <li>iPhone : Réglages → votre nom → Abonnements, ou <a href="https://apps.apple.com/account/subscriptions">apps.apple.com/account/subscriptions</a></li>
+      <li>Android : application Google Play → profil → Paiements et abonnements → Abonnements, ou <a href="https://play.google.com/store/account/subscriptions">play.google.com/store/account/subscriptions</a></li>
+    </ul>
+  </div>
+
+  <h2>Option 1 : depuis l'application</h2>
+  <ol>
+    <li>Ouvrez l'app et touchez l'icône de compte (en haut à droite de l'accueil).</li>
+    <li>Tout en bas de la page « Mon compte », touchez <strong>Supprimer mon compte</strong>.</li>
+    <li>Tapez <strong>SUPPRIMER</strong> pour confirmer.</li>
+  </ol>
+
+  <h2>Option 2 : depuis cette page</h2>
+  <div class="carte">
+    <form id="connexion">
+      <p class="sourd">Connectez-vous avec l'adresse e-mail et le mot de passe de votre compte.</p>
+      <label for="email">Adresse e-mail</label>
+      <input id="email" type="email" autocomplete="email" required>
+      <label for="mdp">Mot de passe</label>
+      <input id="mdp" type="password" autocomplete="current-password" required>
+      <button type="submit" id="btn-connexion">Continuer</button>
+      <p class="sourd" style="margin-top:12px">Mot de passe oublié ? Demandez un nouveau mot de passe depuis l'écran de connexion de l'app, ou <a href="mailto:flowpoleandyoga@gmail.com?subject=Suppression%20de%20mon%20compte">écrivez-nous</a> depuis l'adresse de votre compte : nous supprimerons le compte sous 30 jours.</p>
+      <p id="erreur-connexion" class="erreur cache"></p>
+    </form>
+
+    <form id="confirmation" class="cache">
+      <p>Connecté en tant que <strong id="qui"></strong>.</p>
+      <p>Cette action est irréversible : profil, informations personnelles, rôles, sujets et messages seront effacés. Pour confirmer, tapez <strong>SUPPRIMER</strong>.</p>
+      <label for="mot">Mot de confirmation</label>
+      <input id="mot" type="text" autocomplete="off" autocapitalize="characters" placeholder="SUPPRIMER">
+      <button type="submit" id="btn-supprimer" class="danger" disabled>Supprimer définitivement mon compte</button>
+      <p id="erreur-suppression" class="erreur cache"></p>
+    </form>
+
+    <div id="succes" class="succes cache">
+      <div class="coche">✓</div>
+      <p><strong>Votre compte a été supprimé.</strong></p>
+      <p class="sourd">Vos données personnelles sont effacées. Si vous aviez un abonnement, pensez à le résilier chez Apple ou Google (voir plus haut). Merci d'avoir fait un bout de chemin avec nous.</p>
+    </div>
+  </div>
+
+  <h2>Ce qui est supprimé, ce qui est conservé</h2>
+  <ul>
+    <li><strong>Supprimés immédiatement</strong> : votre compte de connexion, votre profil (nom, prénom, adresse e-mail, adresse postale, âge), vos rôles, vos sujets, messages et commentaires dans la communauté, votre statut d'abonnement dans l'application.</li>
+    <li><strong>Sur votre téléphone</strong> : favoris, séances, notes et progression sont stockés localement ; désinstaller l'application les efface.</li>
+    <li><strong>Conservés</strong> : les justificatifs de facturation liés aux abonnements, conservés par Apple, Google et notre prestataire d'abonnements (RevenueCat) selon leurs propres règles et nos obligations comptables (10 ans, cf. CGV). Ils ne permettent pas de vous recontacter.</li>
+  </ul>
+  <p class="sourd">Détails dans la <a href="confidentialite.html">politique de confidentialité</a>. Pour toute question : <a href="mailto:flowpoleandyoga@gmail.com">flowpoleandyoga@gmail.com</a>.</p>
+
+  <footer>Flow Pole and Yoga · SIRET 953 958 589 · <a href="support.html">Aide et contact</a></footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  var URL_SUPABASE = "https://camneizjfaxohbogympv.supabase.co";
+  var CLE_PUBLIQUE = "sb_publishable_Ub7eOBqw6b9OM7EwLmyqoA_g8Ht4Y5S";
+  var client = supabase.createClient(URL_SUPABASE, CLE_PUBLIQUE, { auth: { persistSession: false } });
+
+  var connexion = document.getElementById("connexion");
+  var confirmation = document.getElementById("confirmation");
+  var succes = document.getElementById("succes");
+  var erreurConnexion = document.getElementById("erreur-connexion");
+  var erreurSuppression = document.getElementById("erreur-suppression");
+  var btnConnexion = document.getElementById("btn-connexion");
+  var btnSupprimer = document.getElementById("btn-supprimer");
+  var mot = document.getElementById("mot");
+  var jeton = null;
+
+  function erreur(el, message) { el.textContent = message; el.className = "erreur"; }
+
+  connexion.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    erreurConnexion.className = "erreur cache";
+    btnConnexion.disabled = true;
+    var res = await client.auth.signInWithPassword({
+      email: document.getElementById("email").value.trim(),
+      password: document.getElementById("mdp").value,
+    });
+    btnConnexion.disabled = false;
+    if (res.error || !res.data.session) {
+      erreur(erreurConnexion, "Adresse ou mot de passe incorrect.");
+      return;
+    }
+    jeton = res.data.session.access_token;
+    document.getElementById("qui").textContent = res.data.user.email;
+    connexion.className = "cache";
+    confirmation.className = "";
+  });
+
+  mot.addEventListener("input", function () {
+    btnSupprimer.disabled = mot.value.trim().toUpperCase() !== "SUPPRIMER";
+  });
+
+  confirmation.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    if (mot.value.trim().toUpperCase() !== "SUPPRIMER" || !jeton) return;
+    erreurSuppression.className = "erreur cache";
+    btnSupprimer.disabled = true;
+    var reponse = await fetch(URL_SUPABASE + "/functions/v1/delete-account", {
+      method: "POST",
+      headers: { apikey: CLE_PUBLIQUE, Authorization: "Bearer " + jeton, "Content-Type": "application/json" },
+      body: JSON.stringify({ confirm: "SUPPRIMER" }),
+    }).catch(function () { return null; });
+    var corps = reponse ? await reponse.json().catch(function () { return {}; }) : {};
+    if (!reponse || !reponse.ok) {
+      btnSupprimer.disabled = false;
+      erreur(erreurSuppression, corps && corps.error ? corps.error : "Suppression impossible pour le moment. Réessayez plus tard ou écrivez-nous.");
+      return;
+    }
+    await client.auth.signOut({ scope: "local" });
+    confirmation.className = "cache";
+    succes.className = "succes";
+  });
+})();
+</script>
+</body>
+</html>
